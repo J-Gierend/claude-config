@@ -2,7 +2,7 @@
 
 Personal Claude Code configuration framework by Josh.
 
-## One-Liner Install
+## One-Liner Install (includes Claude Code CLI)
 
 ### Linux / macOS
 ```bash
@@ -32,9 +32,11 @@ cd $env:USERPROFILE\Documents\claude-config
 
 ## What Gets Installed
 
+- **Claude Code CLI** - Official Anthropic CLI (if not present)
 - `~/.claude/CLAUDE.md` - Main configuration file
 - `~/.claude-bootstrap/` - Claude Bootstrap framework (cloned from alinaqi/claude-bootstrap)
 - `~/.claude/.env` - Email credentials template (optional)
+- **Auto-sync hook** - Pushes CLAUDE.md changes to GitHub automatically
 
 ## Configuration
 
