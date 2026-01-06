@@ -2,20 +2,31 @@
 
 Personal Claude Code configuration framework by Josh.
 
-## Quick Install
+## One-Liner Install
 
 ### Linux / macOS
 ```bash
-git clone https://github.com/J-Gierend/claude-config.git
-cd claude-config
-chmod +x install.sh
+curl -fsSL https://raw.githubusercontent.com/J-Gierend/claude-config/master/bootstrap.sh | bash
+```
+
+### Windows (PowerShell)
+```powershell
+iwr -useb https://raw.githubusercontent.com/J-Gierend/claude-config/master/bootstrap.ps1 | iex
+```
+
+## Manual Install
+
+### Linux / macOS
+```bash
+git clone https://github.com/J-Gierend/claude-config.git ~/Documents/claude-config
+cd ~/Documents/claude-config
 ./install.sh
 ```
 
 ### Windows (PowerShell)
 ```powershell
-git clone https://github.com/J-Gierend/claude-config.git
-cd claude-config
+git clone https://github.com/J-Gierend/claude-config.git $env:USERPROFILE\Documents\claude-config
+cd $env:USERPROFILE\Documents\claude-config
 .\install.ps1
 ```
 
