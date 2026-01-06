@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ClaudeDir = "$env:USERPROFILE\.claude"
 $BootstrapDir = "$env:USERPROFILE\.claude-bootstrap"
+$RepoDir = "$env:USERPROFILE\Documents\claude-config"
 
 Write-Host "[INSTALL] Claude Config Installer" -ForegroundColor Cyan
 Write-Host "=================================" -ForegroundColor Cyan
@@ -23,9 +24,10 @@ if (Test-Path "$ClaudeDir\CLAUDE.md") {
     Copy-Item "$ClaudeDir\CLAUDE.md" $Backup
 }
 
-# Copy CLAUDE.md
+# Copy CLAUDE.md and spec.md
 Write-Host "[OK] Installing CLAUDE.md to $ClaudeDir" -ForegroundColor Green
 Copy-Item "$ScriptDir\CLAUDE.md" "$ClaudeDir\CLAUDE.md" -Force
+Copy-Item "$ScriptDir\spec.md" "$ClaudeDir\spec.md" -Force
 
 # Clone claude-bootstrap if not exists
 if (-not (Test-Path $BootstrapDir)) {
@@ -49,8 +51,36 @@ EMAIL_APP_PASSWORD=your-app-password
     Write-Host "[WARN] Edit $ClaudeDir\.env with your credentials" -ForegroundColor Yellow
 }
 
+# Configure auto-sync hook in settings.json
+Write-Host "[OK] Configuring auto-sync hook..." -ForegroundColor Green
+$SettingsFile = "$ClaudeDir\settings.json"
+$SyncCommand = "powershell -ExecutionPolicy Bypass -File `"$RepoDir\sync.ps1`""
+
+if (Test-Path $SettingsFile) {
+    $Settings = Get-Content $SettingsFile -Raw | ConvertFrom-Json
+} else {
+    $Settings = @{}
+}
+
+# Add hooks configuration
+if (-not $Settings.hooks) {
+    $Settings | Add-Member -NotePropertyName "hooks" -NotePropertyValue @{} -Force
+}
+$Settings.hooks = @{
+    postEdit = @(
+        @{
+            matcher = "**/.claude/CLAUDE.md"
+            command = $SyncCommand
+        }
+    )
+}
+
+$Settings | ConvertTo-Json -Depth 10 | Set-Content $SettingsFile -Encoding UTF8
+Write-Host "[OK] Auto-sync hook configured" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "[DONE] Installation complete!" -ForegroundColor Green
 Write-Host "  - CLAUDE.md: $ClaudeDir\CLAUDE.md"
 Write-Host "  - Bootstrap: $BootstrapDir"
+Write-Host "  - Auto-sync: ENABLED"
 Write-Host ""

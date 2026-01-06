@@ -121,13 +121,16 @@ Add to `~/.claude/settings.json`:
 # 1. Clone repo
 git clone https://github.com/J-Gierend/claude-config.git ~/Documents/claude-config
 
-# 2. Run installer
+# 2. Run installer (auto-configures everything including hooks)
 cd ~/Documents/claude-config
 ./install.sh  # or .\install.ps1 on Windows
-
-# 3. Configure hook (add to ~/.claude/settings.json)
-# See "Linux/macOS Hook Setup" above
 ```
+
+The installer automatically:
+- Copies CLAUDE.md and spec.md to ~/.claude/
+- Clones/updates claude-bootstrap framework
+- Configures the auto-sync hook in settings.json
+- Creates .env template
 
 ### Manual Sync
 
