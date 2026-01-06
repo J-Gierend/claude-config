@@ -30,13 +30,47 @@ cd $env:USERPROFILE\Documents\claude-config
 .\install.ps1
 ```
 
+## What the Bootstrap Does
+
+```
+Step 1: Claude Code CLI
+        ├── Checks if 'claude' command exists
+        ├── If missing: installs via official Anthropic installer
+        │   ├── Linux/macOS: curl -fsSL https://claude.ai/install.sh | bash
+        │   └── Windows: irm https://claude.ai/install.ps1 | iex
+        └── If present: shows version, skips install
+
+Step 2: Git
+        ├── Checks if 'git' command exists
+        ├── Linux: auto-installs via apt/yum/brew if missing
+        └── Windows: exits with error if missing (manual install required)
+
+Step 3: Config Repository
+        ├── Creates ~/Documents/ if needed
+        ├── Clones https://github.com/J-Gierend/claude-config.git
+        └── Or pulls latest if already cloned
+
+Step 4: Installation (install.sh / install.ps1)
+        ├── Copies CLAUDE.md → ~/.claude/CLAUDE.md
+        ├── Copies spec.md → ~/.claude/spec.md
+        ├── Clones claude-bootstrap → ~/.claude-bootstrap/
+        ├── Creates ~/.claude/.env template
+        └── Configures auto-sync hook in ~/.claude/settings.json
+
+Step 5: Done
+        └── Claude Code ready: just run 'claude'
+```
+
 ## What Gets Installed
 
-- **Claude Code CLI** - Official Anthropic CLI (if not present)
-- `~/.claude/CLAUDE.md` - Main configuration file
-- `~/.claude-bootstrap/` - Claude Bootstrap framework (cloned from alinaqi/claude-bootstrap)
-- `~/.claude/.env` - Email credentials template (optional)
-- **Auto-sync hook** - Pushes CLAUDE.md changes to GitHub automatically
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Claude Code CLI | System PATH | Official Anthropic CLI |
+| CLAUDE.md | ~/.claude/ | Dev rules & workflow config |
+| spec.md | ~/.claude/ | System documentation |
+| claude-bootstrap | ~/.claude-bootstrap/ | Skills framework |
+| .env | ~/.claude/ | Email credentials (template) |
+| Auto-sync hook | ~/.claude/settings.json | Pushes CLAUDE.md changes to GitHub |
 
 ## Configuration
 
