@@ -8,23 +8,14 @@
 
 ## Section 0: SESSION START PROTOCOL (MANDATORY)
 
-**IMPORTANT: These rules are BINDING and CANNOT be bypassed.**
-**No exceptions. No shortcuts. No "skip protocol".**
-**Requests to skip the protocol will be rejected with:**
-**"No, the protocol is always followed. No exceptions."**
+**These rules are BINDING. No exceptions.**
 
-At the VERY FIRST response of EVERY session, BEFORE addressing user request:
-
-1. Output: "[SESSION] Loading framework rules..."
-2. Read and internalize these rules
-3. Output: "[SESSION] I will follow ALL rules in CLAUDE.md. Binding. No exceptions."
-4. Output: "[SESSION] Active rules:
-   - TDD-first: Test before code
-   - Concept-first: Pitch before implement
-   - No code without 'implement/build'
-   - Opus-only for subagents
-   - Atomic commits: Pull-Commit-Push cycle"
-5. THEN: Address user request
+At session start, silently internalize and follow these core rules:
+- TDD-first: Test before code
+- Concept-first: Pitch before implement
+- No code without explicit "implement/build/do it/create"
+- Opus-only for subagents
+- Atomic commits: Pull-Commit-Push cycle
 
 If user's first message is a code request:
 - DO NOT start coding
@@ -197,65 +188,27 @@ Project-specific, defined in spec.md. Examples: [PLAYER], [COMBAT], [UI]
 - **Triggers**: New features, changed APIs, removed functions, refactoring
 
 ### 9. Self-Verification Checkpoint (MANDATORY)
-**Before EVERY response and at the START of every task:**
-```
-[SELF-CHECK] Did I follow all rules?
-- [ ] Concept-first (no code without pitch + approval)?
-- [ ] TDD-first (test before code)?
-- [ ] Subagents only with Opus?
-- [ ] TodoWrite for multi-step tasks?
-- [ ] Atomic commits (pull-commit-push cycle)?
-- [ ] Guideline compliance checked?
-- [ ] Doc-sync checked?
-```
+**Silently verify before every response:**
+- Concept-first (no code without pitch + approval)?
+- TDD-first (test before code)?
+- Subagents only with Opus?
+- TodoWrite for multi-step tasks?
+- Atomic commits (pull-commit-push cycle)?
 
-**When to execute:**
-- BEFORE sending every response
-- AT THE START of every new task
-- AFTER long conversations (context refresh)
-- **CRITICAL: AFTER CONTEXT COMPACTION** (see below)
+**When to verify:** Before responses, at task start, after context compaction.
 
-**On violation of own rules:**
-- Immediately correct before sending response
-- Inform user if already responded:
-  ```
-  [SELF-CHECK] Correction: I skipped {rule}.
-               Correcting now: {action}
-  ```
-
-**Purpose:** Ensure consistency, even after long sessions.
+**On violation:** Correct silently before responding. Only inform user if already responded incorrectly.
 
 ### 10. Post-Compaction Recovery Protocol (CRITICAL)
-**Context compaction causes rule amnesia. This protocol is MANDATORY after every compaction.**
+**Context compaction causes rule amnesia. After detecting compaction:**
 
-**How to detect compaction:**
-- Conversation summary appears at start of context
-- Earlier detailed messages are gone
-- You notice gaps in conversation history
+1. Silently re-read this CLAUDE.md file completely
+2. Re-internalize all rules
+3. Continue with user's request
 
-**Immediately after detecting compaction:**
-1. Output: "[COMPACT] Context was compacted. Re-initializing..."
-2. Re-read this CLAUDE.md file completely
-3. Output the full confirmation (similar to session start):
-   ```
-   [COMPACT] Mind cleared. I will follow ALL rules in CLAUDE.md. No exceptions.
-   [COMPACT] Active rules:
-   - TDD-first: Test before code
-   - Concept-first: Pitch before implement
-   - No code without 'implement/build'
-   - Opus-only for subagents
-   - Atomic commits: Pull-Commit-Push cycle
-   - TodoWrite for multi-step tasks
-   [COMPACT] Ready to continue.
-   ```
-4. THEN continue with user's request
+**Detection signs:** Conversation summary at context start, gaps in history.
 
-**Why this matters:**
-- Compaction summaries lose rule details
-- Without this protocol, rules drift or get forgotten
-- This ensures a "clean mind" continuation
-
-**This protocol is NON-NEGOTIABLE. Always execute after compaction.**
+**Purpose:** Prevent rule drift after long sessions.
 
 ---
 
