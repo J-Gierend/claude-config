@@ -1,345 +1,219 @@
-# CLAUDE.md - Global Configuration
+# Operator v2
 
-## Environment Context
-- **Platform**: Auto-detected (Windows/Linux/macOS)
-- **Mode**: Bypassing Permissions Mode (full access)
-
----
-
-## Section 0: SESSION START PROTOCOL (MANDATORY)
-
-**These rules are BINDING. No exceptions.**
-
-At session start, silently internalize and follow these core rules:
-- TDD-first: Test before code
-- Concept-first: Pitch before implement
-- No code without explicit "implement/build/do it/create"
-- Opus-only for subagents
-- Atomic commits: Pull-Commit-Push cycle
-
-If user's first message is a code request:
-- DO NOT start coding
-- Pitch concept first
-- Wait for explicit approval
-
----
-
-## Section 1: Claude-Bootstrap Framework
-
-### Framework Location
-- **Path**: `~/.claude-bootstrap/`
-- **Repository**: https://github.com/alinaqi/claude-bootstrap
-- **Skills**: `~/.claude-bootstrap/skills/` (40 Skills)
-
-### Auto-Update (Every Session Start)
+On first message, output:
 ```
-1. git pull in ~/.claude-bootstrap/
-2. Compare with previous state (commit hash)
-3. If changes: "[UPDATE] Framework updated. New skills: x, y"
-4. If error: "[WARN] Framework update failed. Using local version."
+OPERATOR v2 LOADED | TDD mandatory | Classify → Execute
 ```
 
-### Framework Core Principles (Always Active)
-- **TDD-first**: No code without failing test first
-- **Security-first**: Pre-commit hooks, no secrets in code
-- **Iterative Loops**: Repeat until tests green
-- **Complexity Limits**: Max 20 lines/function, 200 lines/file, 3 params/function
-- **80% Test Coverage**: Mandatory
-- **Code Review**: Before every push
+## Classification
 
-### Always-On Core Skills
-| Skill | Purpose |
-|-------|---------|
-| base.md | Fundamental development rules |
-| security.md | Security-first principles |
-| iterative-development.md | TDD loops |
-| code-review.md | Mandatory reviews |
-| commit-hygiene.md | Git best practices |
+Every message → `Operator v2: [TYPE]` → execute workflow.
 
-### Technology Currency Policy
-**Always use up-to-date dependencies and tools:**
-- Before integrating any GitHub repo or library, verify it's actively maintained
-- If a project has moved to a new repository, use the new one (e.g., rhasspy/piper -> OHF-Voice/piper1-gpl)
-- Avoid dependencies with no updates in 2+ years unless no alternative exists
-- Prefer pip packages over standalone binaries when both options exist
-- When in doubt, check the repo's "last commit" date and issue activity
+| Type | Trigger | Action |
+|------|---------|--------|
+| TRIVIAL | 1-3 lines | edit → test → done |
+| BUG_FIX | broken | checkpoint → executor → verify |
+| FEATURE_SMALL | small add | checkpoint → executor → verify |
+| FEATURE | significant | worktree → plan → **interview** → executor → verify → user tests |
+| REFACTOR | improve | checkpoint → executor → verify |
+| RESEARCH | explain | answer directly |
+| MULTI | N tasks | spawn N orchestrators (parallel) |
+| ORCHESTRATE | complex plan | spawn orchestrator |
+| CAPTURE | "save for later" | save to plans/ as numbered .md |
+| FILE_TASK | "work on plans/..." | plan lifecycle (see below) |
 
----
+## FEATURE Workflow (mandatory steps)
 
-## Section 2: Josh's Overrides (Priority over Framework)
+For any FEATURE classification, follow this exact sequence:
 
-### 1. Concept-First Development
-```
-WORKFLOW:
-1. Create concept and pitch to user
-2. Interview/Review with user
-3. Finalize spec
-4. THEN: TDD-Loop for implementation
+1. **Worktree**: Create git worktree for isolation
+2. **Plan**: Use planning mode to design the approach. When plan is approved, do NOT start implementing yet.
+3. **Interview**: Immediately invoke the `/interview` skill. This catches gaps, asks focused questions, and saves the finalized plan to `plans/NN-slug.md`. No exceptions — every FEATURE gets interviewed before execution.
+4. **Executor**: Only after the interview plan is saved, spawn the executor.
+5. **Verify**: Run all verifiers.
+6. **User tests**: Confirm with the user.
 
-NO code changes without explicit:
-- "implement", "build", "do it", "create", "write the code"
-```
+The interview step is **not optional**. It is the gate between planning and execution.
 
-### 2. Subagent Policy (MANDATORY)
-- **ONLY Claude Opus** for ALL subagents - no exceptions
-- Never use Sonnet or Haiku
-- Parallelize independent tasks with multiple Opus subagents
+## Plan Management
 
-### 3. Atomic Commit Workflow (MANDATORY)
+Plans live in `plans/` as numbered markdown files (e.g., `plans/01-security-audit.md`).
 
-**Core Principle:** Work on main branch, use atomic commits as isolation units. NO WORKTREES.
+### FILE_TASK Lifecycle
 
-#### Pull-Commit-Push Cycle
-1. **PULL** before starting work: `git pull --rebase origin main`
-2. **WORK** on one logical unit, run tests
-3. **COMMIT** with proper tag: `[TYPE][SCOPE] description`
-4. **PUSH** immediately: `git push origin main`
-5. If push rejected: auto-rebase and retry
+When working on a plan file:
 
-#### Commit Message Format
-```
-[TYPE][SCOPE] Short description (imperative mood)
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
-
-#### Type Tags
-| Tag | Meaning | Tests Required |
-|-----|---------|----------------|
-| [FEAT] | New feature | Yes |
-| [FIX] | Bug fix | Yes |
-| [REFACTOR] | Restructuring | Yes |
-| [WIP] | Work in progress | No (squash later) |
-| [DOCS], [CONFIG], [STYLE], [ASSET] | Non-code | No |
-
-#### Scope Tags
-Project-specific, defined in spec.md. Examples: [PLAYER], [COMBAT], [UI]
-
-#### Commit Rules
-- Commit after each logical unit (tests green for code changes)
-- Commit before switching concerns
-- One concept per commit
-- Push immediately after commit
-- Auto-rebase on conflicts
-- WIP commits must be squashed when feature complete
-
-#### Multi-Instance Coordination
-- Multiple Claude instances can work simultaneously
-- Pull-Commit-Push cycle keeps everyone synced
-- Auto-rebase handles remote changes without asking
-
-### 4. Code Style
-- No emojis/unicode in code - only [OK], [FAIL] etc.
-- Modularization: GUI in gui.py, concepts as separate classes
-- Complexity limits from Framework apply
-
-### 5. Task Management
-- TodoWrite ALWAYS for multi-step tasks
-- Finish current task before starting new ones
-- Never work without active todo list
-
-### 6. Additional Rules
-- Explain ideas before implementing - user decides
-- Run syntax/compile check before saying "done"
-- Keep concepts separated and modularized
-
-### 6b. Password Generation Policy (MANDATORY)
-**When generating or recommending passwords:**
-- **NEVER use predictable patterns** like "ServiceName2026", "Admin123", or words + year
-- **ALWAYS generate cryptographically random** passwords using:
-  - `openssl rand -base64 32` or equivalent
-  - Minimum 24 characters for services, 28+ for admin/root
-- **Required complexity:**
-  - Mix of uppercase, lowercase, numbers
-  - Special characters where supported
-  - No dictionary words or common substitutions
-- **For production/live systems:**
-  - Generate and set the password immediately
-  - Never suggest "temporary" weak passwords
-  - Treat ALL server credentials as high-security
-- **Example of WRONG:** `Operator2026`, `AdminPass123!`, `MyService2025`
-- **Example of RIGHT:** `B5HRDE6rZ1PLqQce5eCAslV6N3lC`, `sITLcBR65niTrrewZxWrcoD8RkPH`
-
-### 7. Guideline Compliance Monitoring
-- **Proactively check**: Validate every code change against active guidelines
-- **On violation**: Immediately inform user with specific hint:
-  ```
-  [GUIDELINE] Violation of {guideline-name} detected:
-              {specific location/problem}
-              Offer refactoring? [y/n]
-  ```
-- **Auto-Refactor**: On "y", automatically fix and show the change
-- **Affected Guidelines**:
-  - Framework Core Principles (TDD, Complexity Limits, etc.)
-  - Project-specific guidelines/ files
-  - Clean Code (no duplicates, modularization)
-
-### 8. Documentation Sync Monitoring
-- **Proactively check**: Identify relevant docs when features change
-- **Affected files**: spec.md, README.md, guidelines/, API docs, comments
-- **On mismatch**: Inform user:
-  ```
-  [DOC-SYNC] Feature changed but documentation outdated:
-             Feature: {feature-name}
-             Affected docs: {file(s)}
-             Update documentation? [y/n]
-  ```
-- **Auto-Update**: On "y", update documentation accordingly
-- **Triggers**: New features, changed APIs, removed functions, refactoring
-
-### 9. Self-Verification Checkpoint (MANDATORY)
-**Silently verify before every response:**
-- Concept-first (no code without pitch + approval)?
-- TDD-first (test before code)?
-- Subagents only with Opus?
-- TodoWrite for multi-step tasks?
-- Atomic commits (pull-commit-push cycle)?
-
-**When to verify:** Before responses, at task start, after context compaction.
-
-**On violation:** Correct silently before responding. Only inform user if already responded incorrectly.
-
-### 10. Post-Compaction Recovery Protocol (CRITICAL)
-**Context compaction causes rule amnesia. After detecting compaction:**
-
-1. Silently re-read this CLAUDE.md file completely
-2. Re-internalize all rules
-3. Continue with user's request
-
-**Detection signs:** Conversation summary at context start, gaps in history.
-
-**Purpose:** Prevent rule drift after long sessions.
-
----
-
-## Section 3: Skill-Management
-
-### Auto-Detection at Project Open
-```
-1. Scan: package.json, requirements.txt, Cargo.toml, go.mod, etc.
-2. Detect tech stack automatically
-3. Load matching skills from framework
-4. Report: "Skills active: python, supabase, security"
-```
-
-### Live-Detection During Work
-When new dependency added:
-```
-[SKILL] stripe added to package.json.
-        Activate 'web-payments.md'? [y/n]
-```
-
-### Skill Triggers (Selection)
-| Trigger | Skill |
-|---------|-------|
-| *.py, requirements.txt | python.md |
-| *.ts, tsconfig.json | typescript.md |
-| supabase in deps | supabase.md (or stack-specific variant) |
-| playwright in deps | playwright-testing.md |
-| stripe in deps | web-payments.md |
-
-### Skill Overlap Resolution
-**More specific skill wins**
-- Python + Supabase = supabase-python.md (not supabase.md)
-
-### Project Skill Storage
-`.claude/skills.json`:
-```json
-{
-  "active": ["python", "supabase-python"],
-  "auto_detected": true,
-  "dismissed": []
-}
-```
-
-Full skill list and triggers: See `~/.claude/claude-bootstrap-integration.md`
-
----
-
-## Section 4: Project Initialization
-
-### Empty Folder: Auto-Start
-```
-[INIT] Empty project folder detected.
-       Starting /initialize-project...
-```
-
-### /initialize-project Workflow
-1. Ask for tech stack
-2. Create structure:
+1. **Claim**: Rename file with `PROCESSING-` prefix
    ```
-   project/
-   ├── .claude/skills.json
-   ├── spec.md
-   └── guidelines/
-       ├── design.md
-       └── performance.md
+   plans/01-security-audit.md → plans/PROCESSING-01-security-audit.md
    ```
-3. Activate matching skills
-4. Report: "Project initialized. Skills: [x, y, z]"
+2. **Execute**: Read plan → classify contents → spawn executor/orchestrator
+3. **Complete**: After successful execution, delete the `PROCESSING-` file
+4. **Verify**: Run all verifiers (including plans verifier and documentation verifier)
 
-### Guideline Templates (Project-Type Specific)
-| Type | Guidelines |
-|------|------------|
-| Python CLI | design.md, testing.md |
-| Web App | design.md, performance.md, accessibility.md |
-| Backend API | design.md, performance.md, security.md |
-| Godot Game | design.md, performance.md, asset-management.md |
+### CAPTURE Rules
 
-Templates generated on-demand based on tech stack.
+When saving for later:
+- Use next available number: glob `plans/*.md` → find highest N → use N+1
+- Format: `plans/NN-slug-name.md` (e.g., `plans/10-add-webhooks.md`)
+- Include: objective, acceptance criteria, affected files, context
 
-### Existing Project: Auto-Detect
-1. Scan tech stack from files
-2. Load matching skills
-3. Short message: "Skills active: python, supabase, security"
+## Plan Execution Commands
 
----
+### Terminology
 
-## Section 5: Email Capability
+| Command | Meaning |
+|---------|---------|
+| **"Work on a plan"** | If plan exists → execute it. If plan doesn't exist → create it, interview, save, then execute. |
+| **"Implement/Execute a plan"** | Plan already exists. Execute all steps. |
+| **"Create a plan for X"** | Create + interview + save. Do NOT execute. |
+| **"Review plan NN"** | Read, summarize, ask if execute. |
 
-### Configuration
-Credentials stored in: `~/.claude/.env`
+### Orchestrator Plan Execution Workflow
 
-```python
-import os
-from dotenv import load_dotenv
+**CRITICAL: EVERY step goes through TaskCreate/TaskUpdate. No exceptions.**
 
-load_dotenv(os.path.expanduser("~/.claude/.env"))
-EMAIL = os.getenv("EMAIL_ADDRESS")
-PASSWORD = os.getenv("EMAIL_APP_PASSWORD").replace(" ", "")
+```
+PHASE 1: PREPARE
+├── 1. Read & understand plan
+├── 2. Ask user: "Deployment needed?"
+│   └── If yes → create DEPLOY plan (blocks until dev done)
+├── 3. git commit -m "checkpoint before {plan}"
+├── 4. git worktree ../{plan}-branch
+├── 5. cd to worktree
+└── 6. TaskCreate for EVERY step (set dependencies)
+
+PHASE 2: EXECUTE (loop until all done)
+├── For each UNBLOCKED task (parallel if independent):
+│   ├── 2.1  TaskUpdate: in_progress
+│   ├── 2.2  Spawn executor (TDD: test→fail→code→pass→run ALL tests)
+│   ├── 2.3  TaskUpdate: completed
+│   └── 2.4  Check newly unblocked → spawn in parallel
+└── Repeat until all tasks completed
+
+PHASE 3: FINALIZE
+├── 1. Run all verifiers (background)
+├── 2. Check verdicts → fix if [FAIL] (max 3)
+├── 3. git commit -m "{plan}: complete"
+├── 4. Merge worktree → main
+├── 5. Delete worktree
+└── 6. Inform user + execute DEPLOY plan if exists
 ```
 
-### Rules
-- **ALWAYS ask for confirmation** before sending
-- Show: recipient, subject, body preview
-- Only send on explicit: "yes", "ok", "send"
+## Core Principles (Karpathy-derived)
 
-### YouTuber Letters Project
-- Location: `~/Documents/YouTuber_Letters/`
-- Unsent: root folder (*.txt)
-- Sent: `Sent/` subfolder
+### 1. Think Before Coding
+Don't assume. Don't hide confusion. Surface tradeoffs.
+- State assumptions explicitly. If uncertain, ask (see Question Hierarchy below).
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing.
 
----
+### 2. Simplicity First
+Minimum code that solves the problem. Nothing speculative.
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If 200 lines could be 50, rewrite it.
+- Test: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-## Section 6: Progressive Thinking
+### 3. Surgical Changes
+Touch only what you must. Clean up only your own mess.
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+- Test: Every changed line should trace directly to the request.
 
-Match thinking level to task complexity:
-- **THINK** - Single file edits, simple functions
-- **THINK HARDER** - Multi-file changes, new features
-- **ULTRATHINK** - System architecture, complex algorithms
+### 4. Goal-Driven Execution
+Define success criteria. Loop until verified.
+- Transform tasks into verifiable goals with concrete checks.
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write test that reproduces it, then make it pass"
+- For multi-step tasks, state a brief plan: `[Step] → verify: [check]`
+- Strong success criteria enable autonomous looping. Weak criteria cause confusion.
 
----
+## Question Hierarchy
 
-## Section 7: Resource Management
+**Executors NEVER ask the user.** Questions flow upward through the chain:
 
-Before returning to user:
-- Stop dev servers: `npx kill-port 5001 3000` (or platform equivalent)
-- Close database connections
-- Clean up temporary files and processes
+| Agent | If confused... |
+|-------|---------------|
+| **Executor** | State assumptions in output. If truly blocked, report `BLOCKED: [what's unclear]` — do NOT guess silently, do NOT ask the user. |
+| **Orchestrator** | First try to resolve from context/codebase. If still unclear, ask the user via AskUserQuestion. The orchestrator is the ONLY agent that talks to the user. |
+| **Verifier** | Never asks. Reports findings as [PASS]/[FAIL]. |
 
----
+## Rules
 
-## Reference Documents
-- Full Integration Spec: `~/.claude/claude-bootstrap-integration.md`
-- Framework Skills: `~/.claude-bootstrap/skills/`
-- Framework README: `~/.claude-bootstrap/README.md`
+1. **TDD**: Test first (fail) → implement (pass). No exceptions.
+2. **TASK SYSTEM MANDATORY**: **ALL agents** (orchestrator, executor, verifier) MUST use TaskCreate/TaskUpdate/TaskGet for tracking work. Never rely on memory. Every piece of work = a task.
+3. **Checkpoint**: `git commit -m "checkpoint before {TYPE}"` before work.
+4. **Verify**: Run verifiers before any git op (except checkpoint).
+5. **Inject prompts**: Executors/orchestrators need their .md files injected.
+6. **Parallel**: Independent tasks → single message, multiple Task calls.
+7. **Silent**: Don't explain framework. Don't ask permission. Execute.
+8. **Surgical**: Every changed line must trace directly to the request. No drive-by improvements.
+9. **Simplicity**: Minimum viable code. No speculative features or premature abstractions.
+
+## Spawning
+
+```
+Simple code    → Task + executor-base.md + executor-{type}.md
+Simple research → do it yourself
+Complex/Multi  → Task + orchestrator-agent.md
+```
+
+All spawns: `model: "opus"`, `subagent_type: "general-purpose"`
+
+### MANDATORY: Task Tool for Orchestrators
+
+**CRITICAL**: Orchestrators MUST use the Task tool for ALL work.
+- **NEVER do work directly** (except trivial reads)
+- **ALWAYS spawn** via Task for: coding, research, multi-file ops, analysis
+- **NO EXCEPTIONS**
+
+### MANDATORY: Dependency Tracking and Parallelization
+
+**CRITICAL**: Orchestrators MUST track task dependencies and maximize parallelism.
+
+1. **Define dependencies explicitly** for each task (what must complete first)
+2. **Spawn ALL unblocked tasks in parallel** — single message, multiple Task calls
+3. **Monitor completion** — when any task finishes, check if blocked tasks are now unblocked
+4. **Re-parallelize** — spawn newly unblocked tasks in parallel immediately
+
+Example: If Task A and Task C are independent, but Task B depends on A:
+- Spawn A and C together (parallel)
+- When A completes → spawn B
+- Never spawn B before A completes
+
+### New Tasks During Execution
+
+If user sends new tasks while orchestrator has work in progress:
+1. **DO NOT interrupt** current work
+2. **ADD to END** of task queue
+3. **PROCESS AFTER** current tasks complete
+
+Never interleave new tasks with running work. Queue → finish current → then new.
+
+## Verifiers
+
+After executor: glob `~/.claude/prompts/verifier-*.md` → spawn all verifiers → read verdict files → fix loop (max 3) → revert if fail.
+
+### Spawning Strategy (Context-Safe)
+
+1. **Create output dir**: `mkdir -p verifier-results/` in project root
+2. **Spawn all verifiers** with `run_in_background: true`, `max_turns: 12`
+3. **Each verifier writes** its one-line verdict to `verifier-results/<name>.txt` (e.g., `verifier-results/tests.txt`)
+4. **Wait** for all background agents to complete
+5. **Read ONLY the verdict files** (`verifier-results/*.txt`) — NEVER read TaskOutput for verifiers
+6. **If any [FAIL]**: fix the issue, re-run only that verifier
+7. **Cleanup**: delete `verifier-results/` dir when done
+
+Each verifier prompt must be appended with:
+```
+Write ONLY your verdict line to `verifier-results/<NAME>.txt` as your LAST action. One line only.
+```
+
+This keeps ~10 lines in parent context instead of 10 full agent traces.
